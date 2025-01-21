@@ -44,3 +44,16 @@ def redirect_to_original(request, shortened_url):
         return redirect(original_url)
     else:
         return HttpResponse("URL not found", status=404)
+    
+def url_analytics(request, shortened_url):
+    hit_count = redis_client.get(f"{shortened_url}:hits")
+    last_accessed = redis_client.get(f"{shortened_url}:last_accessed")
+
+    if hit_count is None or last_accessed is None :
+        return HttpResponse("No analytics found for this URL:", status=404)
+    
+    return JsonResponse({
+        'shortened_url': shortened_url,
+        'hits': hit_count,
+        'last_accessed': last_accessed
+    })
