@@ -10,7 +10,7 @@ from django.utils.timezone import now
 
 redis_client = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True)
 
-def generate_shortened_url(request):
+def generate_shortened_url():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 
 def shorten_url(request):
@@ -33,8 +33,11 @@ def shorten_url(request):
             redis_client.set(f"{shortened_url}:hits",0) #initialize it to 0
             redis_client.set(f"{shortened_url}:last_accessed", "Never") #initialize it to never
 
-        return JsonResponse({'shortened_url': shortened_url})
-    return JsonResponse(request, 'shortener/shorten_url.html')
+            base_url = request.build_absolute_uri('/')  # e.g., "http://127.0.0.1:8000/"
+            full_shortened_url = f"{base_url}{shortened_url}"
+
+            return JsonResponse({'shortened_url': full_shortened_url})
+    return render(request, 'shortener/shorten_url.html')
 
 def redirect_to_original(request, shortened_url):
     original_url = redis_client.get(shortened_url)
